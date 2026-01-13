@@ -18,11 +18,14 @@ if not os.path.exists(DATA_FILE):
 def add_marker():
     data = request.json
 
+    # JSON 読み込み
     with open(DATA_FILE, "r") as f:
         markers = json.load(f)
 
+    # 新しいデータを追加
     markers.append(data)
 
+    # JSON 保存
     with open(DATA_FILE, "w") as f:
         json.dump(markers, f, ensure_ascii=False, indent=2)
 
@@ -37,4 +40,5 @@ def list_markers():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
