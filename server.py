@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="")
 CORS(app)
 
 DATA_FILE = "data.json"
@@ -18,14 +18,11 @@ if not os.path.exists(DATA_FILE):
 def add_marker():
     data = request.json
 
-    # JSON 読み込み
     with open(DATA_FILE, "r") as f:
         markers = json.load(f)
 
-    # 新しいデータを追加
     markers.append(data)
 
-    # JSON 保存
     with open(DATA_FILE, "w") as f:
         json.dump(markers, f, ensure_ascii=False, indent=2)
 
@@ -37,6 +34,12 @@ def list_markers():
     with open(DATA_FILE, "r") as f:
         markers = json.load(f)
     return jsonify(markers)
+
+
+# ★ index.html を返すルート
+@app.route("/")
+def index():
+    return send_from_directory("static", "index.html")
 
 
 if __name__ == "__main__":
