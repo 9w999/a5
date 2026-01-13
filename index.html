@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>手伝い募集</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" defer></script>
+
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { height: 60vh; width: 100%; }
+        select, input {
+            width: 90vw;
+            height: 35px;
+            font-size: 18px;
+            margin: 10px;
+        }
+        #btn { margin-left: 10px; margin-top: 20px; font-size: 20px; }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <h1>手伝いを呼びかける</h1>
+
+    <p>年齢：
+        <select id="old">
+            <option value="" selected>選択してください</option>
+            <option value="10">10代</option>
+            <option value="20">20代</option>
+            <option value="30">30代</option>
+            <option value="40">40代</option>
+            <option value="50">50代</option>
+            <option value="60">60代</option>
+            <option value="70">70代</option>
+            <option value="80">80代</option>
+            <option value="90">90代</option>
+            <option value="100">100代以降</option>
+        </select>
+    </p>
+
+    <p>性別：
+        <select id="gender">
+            <option value="" selected>選択してください</option>
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+            <option value="others">その他</option>
+        </select>
+    </p>
+
+    <p>タイトル：
+        <select id="title">
+            <option value="" selected>選択してください</option>
+            <option value="carry">荷物運び</option>
+            <option value="annai">道案内</option>
+            <option value="hand">家の手伝い</option>
+            <option value="gerbage">ごみ捨て</option>
+            <option value="others">その他</option>
+        </select>
+    </p>
+
+    <p>募集内容(任意)：  
+        <input type="text" id="naiyo" placeholder="募集内容を入力">
+    </p>
+
+    <button id="btn">募集する</button>
+
+    <script>
+        let map;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            map = L.map('map').setView([35.7, 139.49], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            navigator.geolocation.getCurrentPosition(initSuccess, error);
+
+            loadMarkers(); // ← 追加
+        });
+
+        function initSuccess(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            map.setView([lat, lng], 16);
+        }
+
+        function hyouji() {
+            alert("詳細ボタンが押されました");
+        }
+
+        function buttonClick() {
+            navigator.geolocation.getCurrentPosition(success, error);
+        }
+
+        function success(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            const age = document.getElementById("old").value;
+            const gender = document.getElementById("gender").value;
+            const title = document.getElementById("title").value;
+            const naiyo = document.getElementById("naiyo").value;
+
+            const data = {
+                lat: lat,
+                lng: lng,
+                age: age,
+                gender: gender,
+                title: title,
+                naiyo: naiyo
+            };
+
+            fetch("http://localhost:5000/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(() => {
+                alert("募集を送信しました！");
+                loadMarkers();
+            });
+        }
+
+        function loadMarkers() {
+            fetch("http://localhost:5000/list")
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(item => {
+                        const marker = L.marker([item.lat, item.lng]).addTo(map);
+
+                        marker.bindPopup(`
+                            <div>
+                                <p><b>年齢：</b>${item.age}</p>
+                                <p><b>性別：</b>${item.gender}</p>
+                                <p><b>タイトル：</b>${item.title}</p>
+                                <p><b>内容：</b>${item.naiyo}</p>
+                            </div>
+                        `);
+                    });
+                });
+        }
+
+        function error() {
+            alert("位置情報が取得できませんでした");
+        }
+
+        document.getElementById("btn").addEventListener("click", buttonClick);
+    </script>
+</body>
+</html>
