@@ -73,6 +73,9 @@
     <script>
         let map;
 
+        // ★ Render の URL をここに入れる
+        const API_URL = "https://あなたのrenderアプリ名.onrender.com";
+
         document.addEventListener("DOMContentLoaded", () => {
             map = L.map('map').setView([35.7, 139.49], 15);
 
@@ -82,17 +85,13 @@
 
             navigator.geolocation.getCurrentPosition(initSuccess, error);
 
-            loadMarkers(); // ← 追加
+            loadMarkers(); // 既存マーカー読み込み
         });
 
         function initSuccess(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             map.setView([lat, lng], 16);
-        }
-
-        function hyouji() {
-            alert("詳細ボタンが押されました");
         }
 
         function buttonClick() {
@@ -117,7 +116,7 @@
                 naiyo: naiyo
             };
 
-            fetch("http://localhost:5000/add", {
+            fetch(`${API_URL}/add`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
@@ -130,7 +129,7 @@
         }
 
         function loadMarkers() {
-            fetch("http://localhost:5000/list")
+            fetch(`${API_URL}/list`)
                 .then(res => res.json())
                 .then(data => {
                     data.forEach(item => {
