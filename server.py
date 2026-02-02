@@ -10,20 +10,21 @@ DATA_FILE = "data.json"
 
 # データファイルがなければ作成
 if not os.path.exists(DATA_FILE):
-    with open(DATA_FILE, "w") as f:
-        json.dump([], f)
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump([], f, ensure_ascii=False, indent=2)
 
 
 @app.route("/add", methods=["POST"])
 def add_marker():
     data = request.json
+    data["approved"] = False  # 承認状態を追加
 
-    with open(DATA_FILE, "r") as f:
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
         markers = json.load(f)
 
     markers.append(data)
 
-    with open(DATA_FILE, "w") as f:
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(markers, f, ensure_ascii=False, indent=2)
 
     return jsonify({"status": "ok"})
@@ -31,12 +32,47 @@ def add_marker():
 
 @app.route("/list", methods=["GET"])
 def list_markers():
-    with open(DATA_FILE, "r") as f:
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
         markers = json.load(f)
     return jsonify(markers)
 
 
-# ★ index.html を返すルート
+@app.route("/approve", methods=["POST"])
+def approve_marker():
+    index = request.json.get("index")
+
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        markers = json.load(f)
+
+    if 0 <= index < len(markers):
+        markers[index]["approved"] = True
+
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(markers, f, ensure_ascii=False, indent=2)
+
+        return jsonify({"status": "ok"})
+
+    return jsonify({"status": "error"}), 400
+
+
+@app.route("/delete", methods=["POST"])
+def delete_marker():
+    index = request.json.get("index")
+
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        markers = json.load(f)
+
+    if 0 <= index < len(markers):
+        markers.pop(index)
+
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(markers, f, ensure_ascii=False, indent=2)
+
+        return jsonify({"status": "ok"})
+
+    return jsonify({"status": "error"}), 400
+
+
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
